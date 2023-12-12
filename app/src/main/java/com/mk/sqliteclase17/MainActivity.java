@@ -24,6 +24,9 @@ public class MainActivity extends AppCompatActivity {
     Spinner sProductos;
     String [] nomProductos = new String [] {"Gaseosa","Jugo","Agua"};
     String nomProducto = "";
+    EditText etBuscar;
+    Button btnBuscar, btnActualizar;
+    private int idVenta = -1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,5 +102,62 @@ public class MainActivity extends AppCompatActivity {
             }
             etReporte.setText(reporte.toString());
         });
+
+        /*
+        * Buscar y Actualizar
+        * */
+        etBuscar = findViewById(R.id.etBuscar);
+        btnBuscar = findViewById(R.id.btnBuscar);
+        btnActualizar = findViewById(R.id.btnActualizar);
+        btnBuscar.setOnClickListener(v -> {
+            String numero = etBuscar.getText().toString();
+            if (!numero.isEmpty()) {
+                DbVenta dbVenta = new DbVenta(MainActivity.this);
+                Venta venta = dbVenta.buscar(numero);
+                if (venta != null) {
+                    idVenta = venta.getId();
+                    etNumero.setText(venta.getNumero());
+                    etCliente.setText(venta.getCliente());
+                    etCantidad.setText(String.valueOf(venta.getCantidad()));
+                    sProductos.setSelection(obtenerIndiceProducto(venta.getProducto()));
+                } else {
+                    Toast.makeText(this, "No se encontró la venta", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Ingrese un número de venta", Toast.LENGTH_SHORT).show();
+            }
+        });
+        btnActualizar.setOnClickListener(v -> {
+            String numero = etNumero.getText().toString();
+            String cliente = etCliente.getText().toString();
+            String cantidad = etCantidad.getText().toString();
+
+            if (!numero.isEmpty() && !cliente.isEmpty() && !cantidad.isEmpty() && Double.parseDouble(cantidad) >= 1) {
+                DbVenta dbVenta = new DbVenta(MainActivity.this);
+                Venta venta = new Venta();
+                venta.setId(idVenta);
+                venta.setNumero(numero);
+                venta.setCliente(cliente);
+                venta.setProducto(nomProducto);
+                venta.setCantidad(Double.parseDouble(cantidad));
+                int filasAfectadas = dbVenta.actualizarPorId(venta);
+                if (filasAfectadas > 0) {
+                    Toast.makeText(this, "Registro actualizado", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Error al actualizar", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Campos inválidos", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private int obtenerIndiceProducto(String producto) {
+        for (int i = 0; i < nomProductos.length; i++) {
+            if (nomProductos[i].equals(producto)) {
+                return i;
+            }
+        }
+        return 0;
     }
 }
